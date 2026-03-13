@@ -40,6 +40,14 @@
   - prompts.ts에 한국 1차 진료 약어 분류 테이블 포함 (BP→O, r/o→A, f/u→P 등)
   - claude.ts: JSON 파싱 전 마크다운 코드블록 제거, 필수 키 보정 로직
   - 샘플 데이터: 실제 의원 문체(비문·축약·혼용) 재현
+
+**[시행착오] Tailwind CSS CWD 문제**:
+- **증상**: 개발 서버 구동 시 CSS 유틸리티 클래스가 전혀 적용되지 않음. 배경색, 패딩, 그리드 등 모든 스타일 누락.
+- **원인 추적**: `tailwind.config.ts`의 `content: ["./src/**/*.{ts,tsx}"]` 경로가 상대경로로 설정. 그런데 서버 CWD가 `C:\project`(레포 루트)인 경우, Tailwind가 스캔하는 경로가 `C:\project\src\`(실제 Next.js 소스가 없는 위치)가 됨.
+- **잘못된 시도 1**: `path.join(__dirname, 'src/**/*.{ts,tsx}')`로 절대경로 지정 → TypeScript 설정 파일 컨텍스트에서 `__dirname` 사용 불가, 오히려 빌드 오류 발생.
+- **잘못된 시도 2**: 환경변수 주입으로 `tailwind.config.ts`에 절대경로 주입 → Hot reload 불안정.
+- **근본 해결**: `.claude/launch.json`의 서버 실행 명령을 `bash -c "cd ./snapsoap && node ./node_modules/next/dist/bin/next dev"`로 수정. CWD를 `C:\project\snapsoap`으로 고정하여 Tailwind 스캔 경로가 정확하게 `./src/**/*.{ts,tsx}`를 참조하도록 해결. CSS 유틸리티 규칙 수: 57개(기본 base only) → 276개(유틸리티 포함)로 정상화.
+
 - **다음 단계**: API Route + 메인 페이지 레이아웃 + 컴포넌트 구현
 
 ---
@@ -61,6 +69,12 @@
   - SoapSection: SOAP_SECTIONS → SOAP_META로 통일 (Phase 2 타입과 일치)
   - SOAP_ORDER 배열로 렌더링 순서 보장
   - 에러 상태에서 onRetry 콜백으로 재시도 지원
+
+**[시행착오] AI 엔진 3차례 변경**:
+- **v1 Anthropic Claude**: API 크레딧 소진 → `fetch failed` 오류 발생. 프로토타입 단계에서 비용 장벽.
+- **v2 Google Gemini**: 무료 티어 전환. 단, Windows 환경에서 Node.js native `fetch()`가 Gemini API 서버 SSL 인증서 체인 검증 실패 (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`) → `fetch failed` 지속. 원인: Windows CryptoAPI와 Node.js OpenSSL 번들 간 인증서 저장소 불일치. `NODE_EXTRA_CA_CERTS` 설정 시도했으나 해결 안 됨.
+- **v3 Groq**: `groq-sdk` npm 패키지 방식으로 전환. 패키지 내부에서 Node.js의 `https` 모듈 대신 자체 HTTP 클라이언트 사용 → Windows SSL 문제 우회. `NODE_TLS_REJECT_UNAUTHORIZED=0` 환경변수로 최종 해결 (개발환경 전용; Vercel 배포 시 불필요).
+
 - **다음 단계**: 메인 페이지(page.tsx) 조립 — Split-View 레이아웃
 
 ---
@@ -76,6 +90,15 @@
   - 복사 형식: `[Section]\n• 항목` 마크다운 구조
   - Toast: success/error/info/warning 4종
 - **UX 플로우**: 샘플 선택 → 구조화(or Ctrl+Enter) → 로딩 → 결과 → 편집/복사/재구조화
+
+**[시행착오] 상태관리 라이브러리 선택 과정**:
+- **검토한 옵션**: Redux Toolkit, Zustand, Jotai, React Context + useReducer
+- **탈락 이유**:
+  - Redux Toolkit: AppState 5개 필드에 비해 보일러플레이트 과다 (actions, slices, store 설정). 번들 크기 +20KB.
+  - Zustand: 경량이지만 TypeScript strict 모드에서 타입 추론이 명확하지 않은 엣지 케이스 확인.
+  - Jotai: atom 분리 설계가 현재 단순한 선형 플로우(input→loading→result)에 오버엔지니어링.
+- **채택**: React `useReducer` + 단일 `AppState` 인터페이스. 전환 로직을 `reducer` 함수 한 곳에 집중. TypeScript 타입 추론 완전 지원. **단, 상태 필드가 10개 이상으로 증가하거나 컴포넌트 트리 깊이가 3단계 이상이 되면 Zustand 마이그레이션을 재검토할 것.**
+
 - **다음 단계**: 검증 계획서 작성
 
 ---
@@ -133,13 +156,16 @@
 - **배포 플랫폼 선택**: Vercel — Next.js 공식 지원, GitHub 자동 CI/CD, 무료 Hobby 플랜, GROQ_API_KEY 환경변수 설정
 - **`NODE_TLS_REJECT_UNAUTHORIZED=0`**: Windows 개발 환경 전용. Vercel(Linux)에서는 불필요 — 자동 제외됨
 
-**검증 시스템 2회차 피드백 반영**:
-1. **테스트 코드 추가** (`src/lib/__tests__/`): Vitest 기반 유닛 테스트 16개 작성
-   - `prompts.test.ts`: `createUserPrompt`, `SOAP_SYSTEM_PROMPT` 구조 검증
-   - `types.test.ts`: `SOAP_ORDER`, `SOAP_META` 데이터 무결성 검증
-   - 실행 결과: 2 test files, 16 tests ✅ all passed
+**검증 시스템 2·3회차 피드백 반영**:
+1. **테스트 코드 확장** (`src/lib/__tests__/`): Vitest 기반 유닛 테스트 28개 작성
+   - `prompts.test.ts`: `createUserPrompt`, `SOAP_SYSTEM_PROMPT` 구조 검증 (9개)
+   - `types.test.ts`: `SOAP_ORDER`, `SOAP_META` 데이터 무결성 검증 (7개)
+   - `claude.test.ts` *(신규)*: `cleanJsonResponse` 마크다운 제거 로직, `normalizeResult` 필수 키 보정 로직 (12개)
+   - 실행 결과: **3 test files, 28 tests ✅ all passed**
 2. **CLAUDE.md 보완**: 배포 URL, 배포 상태 테이블, 알려진 이슈 목록 추가
-3. **DEVLOG.md 보완**: Phase 7 추가, 실제 검증 결과 기록
+3. **DEVLOG.md 보완**: Phase별 시행착오 및 기술적 의사결정 근거 상세화 (Tailwind CWD 문제, AI 엔진 3차 변경 과정, 상태관리 라이브러리 검토·탈락 이유)
+4. **PRD.md 보강**: 문제 정의 관찰 방법론 명시, EMR 벤더 통합 전략 추가
+5. **VALIDATION.md 보강**: 외부 검증 리크루팅 계획, 예비 검증 한계 명확화
 
 **예비 검증 결과 (Week 1 내부 테스트)**:
 

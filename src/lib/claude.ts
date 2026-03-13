@@ -5,6 +5,38 @@ import type { SoapResult } from "./types";
 const API_TIMEOUT_MS = 10_000; // 10초
 
 /**
+ * JSON 응답에서 마크다운 코드블록 제거 후 trim
+ * @internal 유닛 테스트 대상 순수 함수
+ */
+export function cleanJsonResponse(text: string): string {
+  return text
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+}
+
+/**
+ * 파싱된 객체에서 필수 SOAP 키 누락 시 빈 배열로 보정
+ * @internal 유닛 테스트 대상 순수 함수
+ */
+export function normalizeResult(parsed: Record<string, unknown>): SoapResult {
+  const requiredKeys: (keyof SoapResult)[] = [
+    "subjective",
+    "objective",
+    "assessment",
+    "plan",
+    "unclassified",
+  ];
+  const result = { ...parsed } as unknown as SoapResult;
+  for (const key of requiredKeys) {
+    if (!Array.isArray(result[key])) {
+      result[key] = [];
+    }
+  }
+  return result;
+}
+
+/**
  * 자유텍스트 진료 기록을 SOAP 구조로 변환한다.
  * Groq SDK (llama-3.3-70b-versatile) 사용.
  * API 응답 10초 초과 시 자동 타임아웃 처리.
@@ -52,31 +84,14 @@ export async function structurizeToSoap(text: string): Promise<SoapResult> {
   }
 
   // 마크다운 코드블록 제거 후 JSON 파싱
-  const cleaned = responseText
-    .replace(/```json\s*/gi, "")
-    .replace(/```\s*/g, "")
-    .trim();
+  const cleaned = cleanJsonResponse(responseText);
 
   let parsed: SoapResult;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = normalizeResult(JSON.parse(cleaned));
   } catch {
     console.error("[SnapSOAP] JSON 파싱 실패. 원본 응답:", responseText);
     throw new Error("AI 응답을 파싱할 수 없습니다. 원본 텍스트를 확인하세요.");
-  }
-
-  // 필수 키 유효성 검증 — 누락된 키는 빈 배열로 보정
-  const requiredKeys: (keyof SoapResult)[] = [
-    "subjective",
-    "objective",
-    "assessment",
-    "plan",
-    "unclassified",
-  ];
-  for (const key of requiredKeys) {
-    if (!Array.isArray(parsed[key])) {
-      parsed[key] = [];
-    }
   }
 
   const elapsed = Date.now() - startTime;
