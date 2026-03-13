@@ -41,3 +41,24 @@
 - **다음 단계**: API Route + 메인 페이지 레이아웃 + 컴포넌트 구현
 
 ---
+
+### Phase 3 — 핵심 기능 구현
+- **시각**: 2026-03-13
+- **작업**: API Route, layout, 공통 컴포넌트, 에디터 컴포넌트, 샘플 선택기
+- **구현 완료**:
+  - `POST /api/structurize` — 5자 미만/10000자 초과/API 키 누락 각각 분기 처리, SOAP별 항목 수 로깅
+  - `layout.tsx` — sticky 헤더, 프로토타입 면책 푸터
+  - `Button` — primary/secondary/ghost/danger 4종 variant
+  - `Toast` — success/error/warning/info 4종, 자동 닫힘
+  - `LoadingSkeleton` — SOAP 색상 그대로 스켈레톤 (위치 예고 효과)
+  - `TextInput` — 글자 수 색상 경고(85% amber, 초과 red), IME spellCheck off
+  - `SoapSection` — SOAP_META 기반 렌더링, 인라인 편집, 항목 삭제(✕), 빈 섹션 흐리게
+  - `SoapOutput` — 로딩/에러/초기/결과 4개 상태 분기, 미분류 경고 배지
+  - `SampleSelector` — 진료과 배지 컬러 코딩, 선택 상태(aria-pressed), 툴팁
+- **기술 메모**:
+  - SoapSection: SOAP_SECTIONS → SOAP_META로 통일 (Phase 2 타입과 일치)
+  - SOAP_ORDER 배열로 렌더링 순서 보장
+  - 에러 상태에서 onRetry 콜백으로 재시도 지원
+- **다음 단계**: 메인 페이지(page.tsx) 조립 — Split-View 레이아웃
+
+---
