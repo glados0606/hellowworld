@@ -81,9 +81,11 @@ function formatSoapForClipboard(result: SoapResult): string {
 
 // ─── 토스트 상태 ──────────────────────────────────────────────────────────────
 
+type ToastType = "success" | "error" | "info" | "warning";
+
 type ToastState = {
   message: string;
-  type: "success" | "error" | "info" | "warning";
+  type: ToastType;
   key: number;
 } | null;
 
@@ -289,15 +291,15 @@ export default function Home() {
 
 function useReducerToast() {
   const [toast, setRaw] = useReducer(
-    (_: ToastState, action: { message: string; type: ToastState["type"] } | null) =>
+    (_: ToastState, action: { message: string; type: ToastType } | null) =>
       action === null
         ? null
-        : { message: action.message, type: action.type!, key: Date.now() },
+        : { message: action.message, type: action.type, key: Date.now() },
     null as ToastState
   );
 
   const setToast = useCallback(
-    (message: string | null, type?: ToastState["type"]) => {
+    (message: string | null, type?: ToastType) => {
       setRaw(message === null ? null : { message, type: type! });
     },
     []
