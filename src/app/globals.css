@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+/* ─── 기본 변수 ──────────────────────────────────────────────── */
+:root {
+  --foreground: #171717;
+  --background: #f8fafc;
+}
+
+/* ─── 기본 스타일 ─────────────────────────────────────────────── */
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── SOAP 섹션 색상 ─────────────────────────────────────────── */
+.soap-section-s {
+  border-left: 4px solid #8B5CF6;
+  background-color: #EDE9FE;
+}
+.soap-section-o {
+  border-left: 4px solid #3B82F6;
+  background-color: #DBEAFE;
+}
+.soap-section-a {
+  border-left: 4px solid #F59E0B;
+  background-color: #FEF3C7;
+}
+.soap-section-p {
+  border-left: 4px solid #10B981;
+  background-color: #D1FAE5;
+}
+.soap-section-unclassified {
+  border-left: 4px solid #9CA3AF;
+  background-color: #F3F4F6;
+}
+
+/* ─── 텍스트 에디터 ──────────────────────────────────────────── */
+.editor-textarea {
+  font-family: 'Pretendard', sans-serif;
+  line-height: 1.8;
+  resize: vertical;
+  min-height: 420px;
+}
+
+.editor-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
+/* ─── 스켈레톤 로딩 ──────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e4e4e4 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* ─── 페이드 인 ──────────────────────────────────────────────── */
+.fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── 항목 편집 ──────────────────────────────────────────────── */
+.soap-item-editable:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  cursor: text;
+}
+
+.soap-item-editable:focus {
+  outline: 2px solid rgba(139, 92, 246, 0.4);
+  border-radius: 4px;
+}
+
+/* ─── 스크롤바 ───────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

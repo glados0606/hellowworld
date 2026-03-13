@@ -24,3 +24,20 @@
 - **다음 단계**: 프로젝트 스캐폴딩 + Next.js 셋업
 
 ---
+
+### Phase 2 — 프로젝트 스캐폴딩
+- **시각**: 2026-03-13
+- **작업**: 설정 파일, 타입 정의, SOAP 프롬프트, Claude API 래퍼, 샘플 데이터, 글로벌 CSS
+- **결정 사항**:
+  - Tailwind에 SOAP 커스텀 컬러 (S=보라, O=파랑, A=노랑, P=초록)
+  - Claude Sonnet 사용 (claude-sonnet-4-20250514)
+  - API 타임아웃 10초, Promise.race 패턴
+  - 샘플 4종: 급성 URI, 고혈압·당뇨 정기, 급성 요통, 당뇨 합병증
+- **기술 메모**:
+  - types.ts에 SOAP_META, SOAP_ORDER, AppState 포함 — UI 렌더링 전용 타입 분리
+  - prompts.ts에 한국 1차 진료 약어 분류 테이블 포함 (BP→O, r/o→A, f/u→P 등)
+  - claude.ts: JSON 파싱 전 마크다운 코드블록 제거, 필수 키 보정 로직
+  - 샘플 데이터: 실제 의원 문체(비문·축약·혼용) 재현
+- **다음 단계**: API Route + 메인 페이지 레이아웃 + 컴포넌트 구현
+
+---
