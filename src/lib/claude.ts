@@ -2,27 +2,48 @@ import Groq from "groq-sdk";
 import { SOAP_SYSTEM_PROMPT, createUserPrompt } from "./prompts";
 import type { SoapResult } from "./types";
 
+const API_TIMEOUT_MS = 10_000; // 10초
+
 /**
  * 자유텍스트 진료 기록을 SOAP 구조로 변환한다.
  * Groq SDK (llama-3.3-70b-versatile) 사용.
+ * API 응답 10초 초과 시 자동 타임아웃 처리.
  *
- * @throws {Error} API 호출 실패, 파싱 실패 시
+ * @throws {Error} API 호출 실패, 타임아웃, 파싱 실패 시
  */
 export async function structurizeToSoap(text: string): Promise<SoapResult> {
   const startTime = Date.now();
 
-  const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-  const completion = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      { role: "system", content: SOAP_SYSTEM_PROMPT },
-      { role: "user", content: createUserPrompt(text) },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.1,
-    max_tokens: 2048,
+  const client = new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+    timeout: API_TIMEOUT_MS,
   });
+
+  let completion;
+  try {
+    completion = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: SOAP_SYSTEM_PROMPT },
+        { role: "user", content: createUserPrompt(text) },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: 2048,
+    });
+  } catch (error) {
+    const isTimeout =
+      error instanceof Error &&
+      (error.message.includes("timeout") ||
+        error.message.includes("timed out") ||
+        error.name === "APIConnectionTimeoutError");
+    if (isTimeout) {
+      throw new Error(
+        "AI 응답 시간이 초과되었습니다. (10초) 잠시 후 다시 시도해주세요."
+      );
+    }
+    throw error;
+  }
 
   const responseText: string = completion.choices[0]?.message?.content || "";
 

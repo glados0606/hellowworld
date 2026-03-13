@@ -3,7 +3,7 @@
 > 자유텍스트 진료 기록을 AI가 SOAP 포맷으로 자동 구조화하는 웹 에디터
 
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js%2014-black)](https://nextjs.org)
-[![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20API-orange)](https://anthropic.com)
+[![Powered by Groq](https://img.shields.io/badge/Powered%20by-Groq%20API-orange)](https://groq.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://typescriptlang.org)
 
 ---
@@ -32,10 +32,54 @@ EMR 현장에서 반복적으로 목격한 장면이 있다.
 | 기능 | 설명 |
 |------|------|
 | **자유텍스트 입력** | 평소처럼 차트를 작성한다. 형식 제약 없음 |
-| **AI SOAP 구조화** | 버튼 한 번으로 S/O/A/P 자동 분류 (≤5초) |
+| **AI SOAP 구조화** | 버튼 한 번으로 S/O/A/P 자동 분류 (평균 0.4초) |
 | **인라인 편집** | 분류 결과를 클릭해서 직접 수정 |
 | **샘플 케이스** | 실제 1차 진료 케이스 4종으로 즉시 체험 |
 | **결과 복사** | 마크다운 또는 플레인텍스트로 클립보드 복사 |
+
+---
+
+## 사용자 플로우
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SnapSOAP 메인 화면                        │
+│  ┌──────────────────────┐  ┌──────────────────────────────┐  │
+│  │   📝 자유텍스트 입력   │  │     📋 SOAP 구조화 결과      │  │
+│  │                      │  │                              │  │
+│  │  "38.2 기침 3일,     │  │  [S] 38.2 기침 3일          │  │
+│  │   인후통 심해짐.      │  │      어제부터 인후통 심해짐   │  │
+│  │   편도 발적, BP120.  │  │  [O] 편도 발적              │  │
+│  │   편도염. Aug 처방"  │  │      BP 120/80             │  │
+│  │                      │  │  [A] 편도염                 │  │
+│  │  [샘플 선택] [초기화] │  │  [P] Augmentin 625mg 처방  │  │
+│  └──────────────────────┘  └──────────────────────────────┘  │
+│              [ ✨ 구조화 (Ctrl+Enter) ]                        │
+└─────────────────────────────────────────────────────────────┘
+
+사용자 플로우:
+
+1. 진입 ──▶ 직접 입력 or 샘플 선택
+                │
+2. 입력 ──▶ 자유텍스트 작성 (형식 무관)
+                │
+3. 구조화 ──▶ [✨ 구조화] 버튼 클릭 or Ctrl+Enter
+                │
+         ┌──── API 호출 (~0.4초) ────┐
+         │  로딩: 스켈레톤 UI 표시   │
+         └───────────────────────────┘
+                │
+         ┌──── 성공 ─────────────────────────────────┐
+         │  S / O / A / P 섹션별 결과 렌더링         │
+         │  각 항목 클릭 → 인라인 편집 가능          │
+         │  [복사] → 클립보드 저장 + Toast 알림      │
+         └────────────────────────────────────────────┘
+                │
+         ┌──── 실패 ──────────────────────────────────┐
+         │  에러 Toast + [재시도] 버튼                │
+         │  원본 텍스트 보존 (좌측 패널 유지)         │
+         └────────────────────────────────────────────┘
+```
 
 ---
 
@@ -66,21 +110,21 @@ Augmentin 625mg 3일 처방, 3일 후 재진.
 ### 사전 요구사항
 
 - Node.js 18+
-- Anthropic API Key ([console.anthropic.com](https://console.anthropic.com)에서 발급)
+- Groq API Key ([console.groq.com](https://console.groq.com)에서 무료 발급)
 
 ### 설치 및 실행
 
 ```bash
 # 저장소 클론
-git clone https://github.com/your-username/snapsoap.git
-cd snapsoap
+git clone https://github.com/glados0606/hellowworld.git
+cd hellowworld
 
 # 의존성 설치
 npm install
 
 # 환경 변수 설정
 cp .env.example .env.local
-# .env.local 파일을 열고 ANTHROPIC_API_KEY 값을 입력
+# .env.local 파일을 열고 GROQ_API_KEY 값을 입력
 ```
 
 ```bash
@@ -99,7 +143,7 @@ npm run dev
 | 프레임워크 | Next.js 14 (App Router) | API Route로 풀스택 구현, 별도 백엔드 불필요 |
 | 언어 | TypeScript | AI 응답 파싱 타입 안전성, 런타임 오류 방지 |
 | 스타일 | Tailwind CSS | 빠른 프로토타이핑, 디자인 시스템 불필요 |
-| AI 엔진 | Claude Sonnet (Anthropic) | 의료 텍스트 이해도, JSON structured output |
+| AI 엔진 | Groq API (Llama 3.3 70B) | 평균 0.4초 응답, JSON mode, 무료 티어 |
 | 배포 | Vercel | Next.js 최적화, 제로 설정 |
 
 ---
@@ -146,8 +190,8 @@ snapsoap/
 
 ```bash
 # .env.local
-ANTHROPIC_API_KEY=sk-ant-xxxxx   # 필수
-NODE_ENV=development              # development | production
+GROQ_API_KEY=gsk_xxxxx   # 필수 — console.groq.com에서 발급
+NODE_ENV=development      # development | production
 ```
 
 API 키는 서버사이드에서만 사용되며, 클라이언트에 노출되지 않는다.
