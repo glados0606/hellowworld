@@ -77,3 +77,46 @@
 - **다음 단계**: 검증 계획서 작성
 
 ---
+
+### Phase 5 — 검증 계획서 작성
+- **시각**: 2026-03-13
+- **작업**: `docs/VALIDATION.md` 작성 — 가설 3개, KPI 6개, 테스트 설계 3종
+- **검증 설계 요약**:
+  - **가설 1 (효율성)**: 수동 대비 문서화 시간 40% 이상 단축
+  - **가설 2 (정확도)**: SOAP 분류 정확도 85% 이상
+  - **가설 3 (사용성)**: SUS 점수 70점 이상 (Good 등급)
+- **KPI 6개**: SOAP 분류 정확도, Task Completion Time, API 응답 시간, SUS 점수, Task Completion Rate, 수정률
+- **테스트 설계**:
+  - 정확도 검증: 10건 다양한 진료과 케이스, 전문가 2인 독립 평가
+  - 사용성 테스트: 5개 태스크 시나리오, Think-aloud 프로토콜, SUS 설문
+  - A/B 비교: 수동 SOAP 정리 vs SnapSOAP AI 구조화 시간 측정
+- **다음 단계**: 최종 점검 및 커밋 정리
+
+---
+
+### Phase 6 — 최종 점검 및 마무리
+- **시각**: 2026-03-13
+- **작업**: 필수 파일 전체 점검, DEVLOG 업데이트, 최종 커밋 생성
+- **점검 결과**: 필수 파일 23개 전체 확인 ✅
+- **주요 변경 이력** (이번 세션):
+  - Groq API 마이그레이션 (`groq-sdk`, `llama-3.3-70b-versatile`)
+  - SSL 우회 설정 (`NODE_TLS_REJECT_UNAUTHORIZED=0`) — Windows 환경 대응
+  - Split-View 레이아웃 구현 완료 (`page.tsx` 재조립)
+  - `docs/VALIDATION.md` 신규 작성
+- **최종 프로젝트 구조**:
+  ```
+  snapsoap/
+  ├── CLAUDE.md, README.md
+  ├── docs/ (PRD.md, DEVLOG.md, VALIDATION.md)
+  ├── src/
+  │   ├── app/ (page.tsx, layout.tsx, globals.css, api/structurize/)
+  │   ├── components/ (Editor/, Common/, Demo/)
+  │   ├── lib/ (claude.ts, prompts.ts, types.ts)
+  │   └── data/ (samples.ts)
+  ├── package.json, tsconfig.json, tailwind.config.ts
+  └── .env.example, .gitignore
+  ```
+- **AI 엔진**: Groq API (llama-3.3-70b-versatile) — 평균 응답 370-400ms
+- **상태**: 프로토타입 완성, 검증 준비 완료
+
+---

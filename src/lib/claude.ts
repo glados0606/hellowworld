@@ -1,37 +1,30 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { SOAP_SYSTEM_PROMPT, createUserPrompt } from "./prompts";
 import type { SoapResult } from "./types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const TIMEOUT_MS = 10_000;
-
 /**
  * 자유텍스트 진료 기록을 SOAP 구조로 변환한다.
- * Gemini API (gemini-2.0-flash) 사용.
+ * Groq SDK (llama-3.3-70b-versatile) 사용.
  *
- * @throws {Error} API 호출 실패, 파싱 실패, 타임아웃 시
+ * @throws {Error} API 호출 실패, 파싱 실패 시
  */
 export async function structurizeToSoap(text: string): Promise<SoapResult> {
   const startTime = Date.now();
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    systemInstruction: SOAP_SYSTEM_PROMPT,
-    generationConfig: {
-      temperature: 0.1,
-      responseMimeType: "application/json",
-    },
+  const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+  const completion = await client.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      { role: "system", content: SOAP_SYSTEM_PROMPT },
+      { role: "user", content: createUserPrompt(text) },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.1,
+    max_tokens: 2048,
   });
 
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("API 응답 시간 초과 (10초)")), TIMEOUT_MS)
-  );
-
-  const apiPromise = model.generateContent(createUserPrompt(text));
-  const result = await Promise.race([apiPromise, timeoutPromise]);
-
-  const responseText = result.response.text();
+  const responseText: string = completion.choices[0]?.message?.content || "";
 
   if (!responseText) {
     throw new Error("AI 응답이 비어있습니다.");

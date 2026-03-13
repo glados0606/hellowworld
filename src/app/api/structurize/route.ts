@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ── API 키 확인 ──────────────────────────────────────────────
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("[SnapSOAP] GEMINI_API_KEY 환경 변수 미설정");
+    if (!process.env.GROQ_API_KEY) {
+      console.error("[SnapSOAP] GROQ_API_KEY 환경 변수 미설정");
       return NextResponse.json<StructurizeResponse>(
-        { success: false, error: "서버 설정 오류입니다. .env.local의 GEMINI_API_KEY를 확인하세요." },
+        { success: false, error: "서버 설정 오류입니다. .env.local의 GROQ_API_KEY를 확인하세요." },
         { status: 500 }
       );
     }
