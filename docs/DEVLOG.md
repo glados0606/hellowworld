@@ -62,3 +62,18 @@
 - **다음 단계**: 메인 페이지(page.tsx) 조립 — Split-View 레이아웃
 
 ---
+
+### Phase 4 — UI/UX 구현 (메인 페이지 조립)
+- **시각**: 2026-03-13
+- **작업**: 메인 페이지 조립, Split-View 레이아웃, 상태 관리 통합
+- **UX 결정 사항**:
+  - Split-View: lg 이상 2컬럼, 모바일 세로 스택
+  - 버튼 트리거 방식 (실시간 아님 — API 비용 + 의도적 동작)
+  - `Ctrl+Enter` / `Cmd+Enter` 키보드 단축키
+  - 에러 상태(`error` 문자열) 별도 관리 → SoapOutput에 전달, onRetry로 재시도 가능
+  - 복사 형식: `[Section]\n• 항목` 마크다운 구조
+  - Toast: success/error/info/warning 4종
+- **UX 플로우**: 샘플 선택 → 구조화(or Ctrl+Enter) → 로딩 → 결과 → 편집/복사/재구조화
+- **다음 단계**: 검증 계획서 작성
+
+---
